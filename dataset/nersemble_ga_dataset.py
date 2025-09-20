@@ -32,7 +32,8 @@ class NeRSembleGADataset(Dataset):
     def __init__(self, 
         flame_model: FLAME,
         json_path: str,
-        train: bool = True
+        train: bool = True,
+        prefetch: bool=False
     ):
         self.train = train
         self.preload = False
@@ -139,24 +140,26 @@ class NeRSembleGADataset(Dataset):
         self.mesh_verts = self.mesh_verts.cpu()
         self.blend_weight = self.exprs.clone().cpu()
 
+        self.prefetch = prefetch
         if self.train:
             self.image_data = torch.zeros([len(self.image_paths), self.image_height, self.image_width, 3], dtype=torch.uint8)
             self.mask_data = torch.zeros([len(self.image_paths), self.image_height, self.image_width], dtype=torch.uint8)
 
-            def load_single_image(i):
-                image = torch.from_numpy(np.array(Image.open(self.image_paths[i]), dtype=np.uint8))
-                mask = torch.from_numpy(np.array(Image.open(self.mask_paths[i]), dtype=np.uint8))
-                return i, image, mask
+            if self.prefetch:
+                def load_single_image(i):
+                    image = torch.from_numpy(np.array(Image.open(self.image_paths[i]), dtype=np.uint8))
+                    mask = torch.from_numpy(np.array(Image.open(self.mask_paths[i]), dtype=np.uint8))
+                    return i, image, mask
 
-            tasks = []
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                for i in range(len(self.image_paths)):
-                    tasks.append(executor.submit(load_single_image, i))
+                tasks = []
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    for i in range(len(self.image_paths)):
+                        tasks.append(executor.submit(load_single_image, i))
 
-                for future in tqdm(as_completed(tasks), total=len(tasks), desc="Loading training images"):
-                    i, image, mask = future.result()
-                    self.image_data[i] = image
-                    self.mask_data[i] = mask
+                    for future in tqdm(as_completed(tasks), total=len(tasks), desc="Loading training images"):
+                        i, image, mask = future.result()
+                        self.image_data[i] = image
+                        self.mask_data[i] = mask
         else:
             self.image_data = None
             self.mask_data = None
@@ -176,10 +179,10 @@ class NeRSembleGADataset(Dataset):
         cam_position = self.cam_positions[index]
 
         if self.train:
-            # rgb = torch.from_numpy(np.array(Image.open(self.image_paths[index])))
-            # mask = torch.from_numpy(np.array(Image.open(self.mask_paths[index]))).unsqueeze(-1)
-            rgb = self.image_data[index]
-            mask = self.mask_data[index].unsqueeze(-1)
+            rgb = torch.from_numpy(np.array(Image.open(self.image_paths[index])))
+            mask = torch.from_numpy(np.array(Image.open(self.mask_paths[index]))).unsqueeze(-1)
+            # rgb = self.image_data[index]
+            # mask = self.mask_data[index].unsqueeze(-1)
             image = torch.cat([rgb, mask], dim=-1).permute(2, 0, 1)
 
             return {

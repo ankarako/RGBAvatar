@@ -51,7 +51,7 @@ class DataLoader:
 
 def train_offline(
     dataset: NeRSembleGADataset, gaussian_model: BindingModel, 
-    output_path: str, train_config, log: bool = False
+    output_path: str, train_config, log: bool = True
 ):
     batch_size = train_config['batch_size']
     iteration = train_config['iteration']
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     parser.add_argument("--subject", type=str, default="074")
     parser.add_argument("--work_name", type=str, default=None)
     parser.add_argument("--config", type=str, default="config/nersemble.yaml")
-    parser.add_argument("--log", action="store_true")
+    parser.add_argument("--log", action="store_true", default=True)
     args = parser.parse_args(sys.argv[1:])
     with open(args.config) as f: config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     print("Output:", output_path)
 
     dataset_dir = config['data_dir']
-    json_path = f'{dataset_dir}/cluster/ikarus/sqian/project/dynamic-head-avatars/code/multi-view-head-tracker/export/UNION10_{args.subject}_EMO1234EXP234589_v16_DS2-0.5x_lmkSTAR_teethV3_SMOOTH_offsetS_whiteBg_maskBelowLine/transforms_train.json'
+    json_path = f'{dataset_dir}/{args.subject}/cluster/ikarus/sqian/project/dynamic-head-avatars/code/multi-view-head-tracker/export/UNION10_{args.subject}_EMO1234EXP234589_v16_DS2-0.5x_lmkSTAR_teethV3_SMOOTH_offsetS_whiteBg_maskBelowLine/transforms_train.json'
 
     if config['template_type'] == 'Flame':
         flame_config = FlameConfig()

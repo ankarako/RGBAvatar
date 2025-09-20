@@ -275,13 +275,13 @@ class MultiViewReconstruction:
                     self.tb_writer.add_scalar('train_loss/orth_loss', orth_loss_val.item(), self.iteration)
                 self.tb_writer.add_scalar('train_loss/total_loss', total_loss.item(), self.iteration)
             
-            if self.iteration % 3000 == 0:
-                self.tb_writer.add_image('pred', image, self.iteration, dataformats='NCHW')
-                self.tb_writer.add_image('gt', gt_rgb, self.iteration, dataformats='NCHW')
+                if self.iteration % 3000 == 0:
+                    self.tb_writer.add_image('pred', image, self.iteration, dataformats='NCHW')
+                    self.tb_writer.add_image('gt', gt_rgb, self.iteration, dataformats='NCHW')
 
-                shading, mask = vis_shading_mesh(self.gaussian_model.glctx, self.width, self.height, cam_proj_mats, template_mesh, self.gaussian_model.template_faces)
-                shading, mask = shading.permute(0, 3, 1, 2), mask.permute(0, 3, 1, 2)
-                mesh_images = (gt_rgb * 0.3 + shading * 0.7) * mask + gt_rgb * (~mask)
-                self.tb_writer.add_image('mesh', mesh_images, self.iteration, dataformats='NCHW')
+                    shading, mask = vis_shading_mesh(self.gaussian_model.glctx, self.width, self.height, cam_proj_mats, template_mesh, self.gaussian_model.template_faces)
+                    shading, mask = shading.permute(0, 3, 1, 2), mask.permute(0, 3, 1, 2)
+                    mesh_images = (gt_rgb * 0.3 + shading * 0.7) * mask + gt_rgb * (~mask)
+                    self.tb_writer.add_image('mesh', mesh_images, self.iteration, dataformats='NCHW')
 
         self.iteration += batch_size
